@@ -3,6 +3,7 @@ Typescript Express Example
 ```
 # Development
 npm install
+npm run routes
 npm run build
 npm run server
 

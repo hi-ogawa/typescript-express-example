@@ -1,27 +1,24 @@
 import process from "process";
-import express, { Request, Response } from "express";
+import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import morgan from "morgan";
 
+import { routes } from "./routes";
+import { notFoundHandler } from "./handlers";
+
 const app = express();
+export default app;
 
 // Middlewares
-app.use(bodyParser.json());
-
-app.use(cors({ origin: "*" }));
-
 if (process.env.NODE_ENV !== "test") {
   app.use(morgan("combined"));
 }
+app.use(cors({ origin: "*" }));
+app.use(bodyParser.json());
 
-// TODO: More routes
+// Routes
+app.use(routes);
 
 // Not found handler
-app.use((req: Request, res: Response) => {
-  res
-    .status(404)
-    .json({ status: "error", message: `Not found ${req.originalUrl}` });
-});
-
-export default app;
+app.use(notFoundHandler);

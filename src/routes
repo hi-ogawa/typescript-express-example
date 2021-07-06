@@ -1,0 +1,7 @@
+# Run `npm run routes` to generate `routes.ts`
+
+get   /home   HomeController  index
+
+post  /users/register   UsersController   register
+post  /users/login      UsersController   login
+get   /users/new_token  UsersController   newToken
