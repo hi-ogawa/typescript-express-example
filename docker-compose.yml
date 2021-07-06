@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  # Access psql by
+  #   docker-compose exec postgres psql dev postgres
+  postgres:
+    image: postgres:13.3-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=pgpass
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - PGDATA=/var/lib/postgresql/data
+    volumes:
+      - postgres_dev_volume:/var/lib/postgresql/data
+
+volumes:
+  postgres_dev_volume:
