@@ -20,4 +20,8 @@ jobs:
       - run: npm install
       - run: npm run routes
       - run: npm run build
+      - run: >
+          docker-compose up postgres &
+          WAIT_DEBUG=1 bash src/scripts/wait.sh docker-compose exec -T postgres psql postgres postgres -c '\q'
+      - run: npm run db:create:test
       - run: npm run test

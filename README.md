@@ -3,16 +3,22 @@ Typescript Express Example
 ```
 # Development
 npm install
-npm run routes             # Generate routes.ts
-docker-compose up postgres # Run postgres
-npm run db create          # Create database
-npx knex migrate:latest    # Run migration
+npm run routes                # Generate routes.ts
+docker-compose up postgres    # Run postgres
+npm run db:create:development # Create database
+npx typeorm migration:run     # Run migration
 npm run build
 npm run server
 
 # Testing
+npm run db:create:test
 npm run test
 
 # Formatting
 npm run format
+
+# Console
+npm run console
+> await g.createConnection()
+> user = await g.User.register({ username: "xxx", password: "yyy" })
 ```

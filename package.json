@@ -1,19 +1,23 @@
 {
   "scripts": {
-    "build": "tsc --sourceMap",
-    "build:watch": "tsc --sourceMap --watch",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
     "build:clean": "rm -rf build",
     "routes": "ts-node -T src/scripts/make-routes src/routes src/routes.ts",
-    "db": "ts-node -T src/scripts/db.ts",
-    "console": "node --experimental-repl-await",
+    "console": "node -e 'global.g = require(\"./build/console\");' -i --experimental-repl-await",
+    "db:create:development": "typeorm query -c root 'CREATE DATABASE development'",
+    "db:create:test": "typeorm query -c root 'CREATE DATABASE test'",
+    "db:reset:development": "NODE_ENV=development typeorm schema:drop && npm run db:create:development",
     "server": "node build/server.js",
     "server:watch": "nodemon build/server.js",
-    "test": "NODE_ENV=test mocha",
+    "test": "NODE_ENV=test mocha --require source-map-support/register",
     "test:watch": "npm run test -- --watch",
+    "test:inspect": "NODE_ENV=test mocha inspect --require source-map-support/register",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.10",
     "@types/express": "^4.17.12",
     "@types/mocha": "^8.2.2",
@@ -30,12 +34,14 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "commander": "^7.2.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "knex": "^0.95.6",
     "morgan": "^1.10.0",
-    "pg": "^8.6.0"
+    "pg": "^8.6.0",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.2.34"
   }
 }

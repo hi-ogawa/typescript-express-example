@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   # Access psql by
-  #   docker-compose exec postgres psql dev postgres
+  #   docker-compose exec postgres psql development postgres
   postgres:
     image: postgres:13.3-alpine
     ports:

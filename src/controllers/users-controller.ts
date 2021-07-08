@@ -1,5 +1,5 @@
 import { ApplicationController } from "./application-controller";
-import User from "../models/user";
+import { User } from "../models/user";
 
 export class UsersController extends ApplicationController {
   async register() {
@@ -7,11 +7,15 @@ export class UsersController extends ApplicationController {
     if (!user) {
       return this.res.status(400).end();
     }
-    this.res.json(user.toJson());
+    this.res.json(user.toResponse());
   }
 
   async login() {
-    // TODO
+    const user = await User.login(this.req.body);
+    if (!user) {
+      return this.res.status(400).end();
+    }
+    this.res.json(user.toResponse());
   }
 
   async newToken() {
