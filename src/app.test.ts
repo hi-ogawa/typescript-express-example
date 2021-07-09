@@ -1,5 +1,5 @@
 import { describe, it } from "mocha";
-import { equal, deepEqual } from "assert";
+import { strictEqual, deepStrictEqual } from "assert";
 import supertest from "supertest";
 import { Connection, createConnection } from "typeorm";
 import app from "./app";
@@ -25,8 +25,8 @@ describe("app", () => {
     await supertest(app)
       .get("/no-such-endpoint")
       .then((res) => {
-        equal(res.statusCode, 404);
-        deepEqual(res.body, {
+        strictEqual(res.statusCode, 404);
+        deepStrictEqual(res.body, {
           status: "error",
           message: "Not found /no-such-endpoint",
         });
@@ -37,8 +37,8 @@ describe("app", () => {
     await supertest(app)
       .get("/home")
       .then((res) => {
-        equal(res.statusCode, 200);
-        deepEqual(res.body, {
+        strictEqual(res.statusCode, 200);
+        deepStrictEqual(res.body, {
           status: "success",
           message: "Hello World.",
         });
@@ -51,9 +51,9 @@ describe("app", () => {
         .post("/users/register")
         .send({ username: "asdf", password: "jkl;" })
         .then(async (res) => {
-          equal(res.statusCode, 200);
-          deepEqual(res.body.username, "asdf");
-          equal(await User.count(), 1);
+          strictEqual(res.statusCode, 200);
+          deepStrictEqual(res.body.username, "asdf");
+          strictEqual(await User.count(), 1);
         });
     });
 
@@ -62,8 +62,8 @@ describe("app", () => {
         .post("/users/register")
         .send({ username: "asdf" })
         .then(async (res) => {
-          equal(res.statusCode, 400);
-          equal(await User.count(), 0);
+          strictEqual(res.statusCode, 400);
+          strictEqual(await User.count(), 0);
         });
     });
 
@@ -73,7 +73,7 @@ describe("app", () => {
         .post("/users/register")
         .send({ username: "asdf", password: "uiop" })
         .then(async (res) => {
-          equal(res.statusCode, 400);
+          strictEqual(res.statusCode, 400);
         });
     });
   });
@@ -88,8 +88,8 @@ describe("app", () => {
         .post("/users/login")
         .send({ username: "asdf", password: "jkl;" })
         .then(async (res) => {
-          equal(res.statusCode, 200);
-          deepEqual(res.body.username, "asdf");
+          strictEqual(res.statusCode, 200);
+          deepStrictEqual(res.body.username, "asdf");
         });
     });
 
@@ -98,7 +98,7 @@ describe("app", () => {
         .post("/users/login")
         .send({ username: "asdf", password: "uiop" })
         .then(async (res) => {
-          equal(res.statusCode, 400);
+          strictEqual(res.statusCode, 400);
         });
     });
   });
@@ -115,8 +115,8 @@ describe("app", () => {
         .post("/users/new-token")
         .set("authorization", `Bearer ${token}`)
         .then(async (res) => {
-          equal(res.statusCode, 200);
-          equal(res.body.username, "asdf");
+          strictEqual(res.statusCode, 200);
+          strictEqual(res.body.username, "asdf");
         });
     });
 
@@ -124,7 +124,7 @@ describe("app", () => {
       await supertest(app)
         .post("/users/new-token")
         .then(async (res) => {
-          equal(res.statusCode, 401);
+          strictEqual(res.statusCode, 401);
         });
     });
   });

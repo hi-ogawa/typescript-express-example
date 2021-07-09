@@ -1,5 +1,5 @@
 import { describe, it } from "mocha";
-import assert, { equal, deepEqual } from "assert";
+import assert, { strictEqual, deepStrictEqual } from "assert";
 import { Connection, createConnection } from "typeorm";
 import { User } from "./user";
 import { sleep } from "../utils";
@@ -28,7 +28,7 @@ describe("User", () => {
     await user.save();
     assert(user.timestamps.createdAt instanceof Date);
     assert(user.timestamps.createdAt >= now);
-    equal(user.timestamps.createdAt, user.timestamps.updatedAt);
+    strictEqual(user.timestamps.createdAt, user.timestamps.updatedAt);
 
     user.username = "qwer";
     await sleep(10);
@@ -39,34 +39,40 @@ describe("User", () => {
   describe("register", () => {
     it("success", async () => {
       const user = await User.register({ username: "asdf", password: "jkl;" });
-      equal(user!.hasId(), true);
-      equal(user!.passwordHash.substr(0, 7), "$2b$10$");
+      strictEqual(user!.hasId(), true);
+      strictEqual(user!.passwordHash.substr(0, 7), "$2b$10$");
     });
 
     it("error", async () => {
       const user = await User.register({ username: "asdf" });
-      equal(user, undefined);
+      strictEqual(user, undefined);
     });
   });
 
   it("login", async () => {
     const user = await User.register({ username: "asdf", password: "jkl;" });
-    deepEqual(await User.login({ username: "asdf", password: "jkl;" }), user);
-    equal(await User.login({ username: "asdf", password: "uiop" }), undefined);
+    deepStrictEqual(
+      await User.login({ username: "asdf", password: "jkl;" }),
+      user
+    );
+    strictEqual(
+      await User.login({ username: "asdf", password: "uiop" }),
+      undefined
+    );
   });
 
   it("verifyPassword", async () => {
     const user = await User.register({ username: "asdf", password: "jkl;" });
     assert(user instanceof User);
-    equal(await user!.verifyPassword("jkl;"), true);
-    equal(await user!.verifyPassword("uiop"), false);
+    strictEqual(await user!.verifyPassword("jkl;"), true);
+    strictEqual(await user!.verifyPassword("uiop"), false);
   });
 
   describe("generateToken", () => {
     it("works", async () => {
       const user = await User.register({ username: "asdf", password: "jkl;" });
       const token = user!.generateToken();
-      equal(token.split(".").length, 3);
+      strictEqual(token.split(".").length, 3);
     });
   });
 
@@ -80,12 +86,12 @@ describe("User", () => {
       const token = user!.generateToken();
       const result = await User.findByToken(token);
       assert(result instanceof User);
-      equal(result.id, user!.id);
+      strictEqual(result.id, user!.id);
     });
 
     it("error", async () => {
       const result = await User.findByToken("xyz.123.hello");
-      equal(result, undefined);
+      strictEqual(result, undefined);
     });
   });
 });
