@@ -9,7 +9,7 @@ export abstract class BaseController {
       if (this.res.writableEnded) {
         return;
       }
-      await action.bind(this)();
+      await action();
     }
   }
 }

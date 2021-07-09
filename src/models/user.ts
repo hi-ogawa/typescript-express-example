@@ -75,10 +75,10 @@ export class User extends BaseEntity {
       return;
     }
     const user = await this.findOne({ username });
-    if (user && (await user.verifyPassword(password!))) {
-      return user;
+    if (!user || !(await user.verifyPassword(password))) {
+      return;
     }
-    return;
+    return user;
   }
 
   static async findByToken(token: string): Promise<User | undefined> {
