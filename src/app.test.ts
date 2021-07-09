@@ -52,7 +52,7 @@ describe("app", () => {
         .send({ username: "asdf", password: "jkl;" })
         .then(async (res) => {
           equal(res.statusCode, 200);
-          deepEqual(res.body, { username: "asdf" });
+          deepEqual(res.body.username, "asdf");
           equal(await User.count(), 1);
         });
     });
@@ -89,7 +89,7 @@ describe("app", () => {
         .send({ username: "asdf", password: "jkl;" })
         .then(async (res) => {
           equal(res.statusCode, 200);
-          deepEqual(res.body, { username: "asdf" });
+          deepEqual(res.body.username, "asdf");
         });
     });
 
@@ -99,6 +99,32 @@ describe("app", () => {
         .send({ username: "asdf", password: "uiop" })
         .then(async (res) => {
           equal(res.statusCode, 400);
+        });
+    });
+  });
+
+  describe("/users/new-token", () => {
+    let user: User | undefined;
+    beforeEach(async () => {
+      user = await User.register({ username: "asdf", password: "jkl;" });
+    });
+
+    it("success", async () => {
+      const token = user!.generateToken();
+      await supertest(app)
+        .post("/users/new-token")
+        .set("authorization", `Bearer ${token}`)
+        .then(async (res) => {
+          equal(res.statusCode, 200);
+          equal(res.body.username, "asdf");
+        });
+    });
+
+    it("error", async () => {
+      await supertest(app)
+        .post("/users/new-token")
+        .then(async (res) => {
+          equal(res.statusCode, 401);
         });
     });
   });

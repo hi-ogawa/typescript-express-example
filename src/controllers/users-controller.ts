@@ -19,9 +19,9 @@ export class UsersController extends ApplicationController {
   }
 
   async newToken() {
-    if (!(await this.authenticateUser())) {
-      return;
-    }
-    // TODO
+    await this.chain(
+      async () => this.authenticateUser(),
+      async () => this.res.json((await this.currentUser())!.toResponse()).end()
+    );
   }
 }

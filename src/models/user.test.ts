@@ -61,4 +61,31 @@ describe("User", () => {
     equal(await user!.verifyPassword("jkl;"), true);
     equal(await user!.verifyPassword("uiop"), false);
   });
+
+  describe("generateToken", () => {
+    it("works", async () => {
+      const user = await User.register({ username: "asdf", password: "jkl;" });
+      const token = user!.generateToken();
+      equal(token.split(".").length, 3);
+    });
+  });
+
+  describe("findByToken", () => {
+    let user: User | undefined;
+    beforeEach(async () => {
+      user = await User.register({ username: "asdf", password: "jkl;" });
+    });
+
+    it("success", async () => {
+      const token = user!.generateToken();
+      const result = await User.findByToken(token);
+      assert(result instanceof User);
+      equal(result.id, user!.id);
+    });
+
+    it("error", async () => {
+      const result = await User.findByToken("xyz.123.hello");
+      equal(result, undefined);
+    });
+  });
 });
