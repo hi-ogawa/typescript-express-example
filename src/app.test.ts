@@ -49,68 +49,67 @@ describe("app", () => {
     it("success", async () => {
       await supertest(app)
         .post("/users/register")
-        .send({ username: "asdf", password: "jkl;" })
+        .send({ username: "asdf", password: "12345678" })
         .then(async (res) => {
           strictEqual(res.statusCode, 200);
-          deepStrictEqual(res.body.username, "asdf");
+          deepStrictEqual(res.body.data.username, "asdf");
           strictEqual(await User.count(), 1);
         });
     });
 
-    it("error (no password)", async () => {
+    it("error", async () => {
       await supertest(app)
         .post("/users/register")
         .send({ username: "asdf" })
         .then(async (res) => {
-          strictEqual(res.statusCode, 400);
-          strictEqual(await User.count(), 0);
-        });
-    });
-
-    it("error (duplicate usernames)", async () => {
-      await User.register({ username: "asdf", password: "jkl;" });
-      await supertest(app)
-        .post("/users/register")
-        .send({ username: "asdf", password: "uiop" })
-        .then(async (res) => {
-          strictEqual(res.statusCode, 400);
+          strictEqual(res.statusCode, 422);
+          deepStrictEqual(res.body, {
+            status: "error",
+            data: [
+              {
+                property: "passwordHash",
+                constraints: {
+                  isNotEmpty: "password should not be empty",
+                },
+              },
+            ],
+          });
         });
     });
   });
 
   describe("/users/login", () => {
     beforeEach(async () => {
-      await User.register({ username: "asdf", password: "jkl;" });
+      await User.register({ username: "asdf", password: "12345678" });
     });
 
     it("success", async () => {
       await supertest(app)
         .post("/users/login")
-        .send({ username: "asdf", password: "jkl;" })
+        .send({ username: "asdf", password: "12345678" })
         .then(async (res) => {
           strictEqual(res.statusCode, 200);
-          deepStrictEqual(res.body.username, "asdf");
+          deepStrictEqual(res.body.data.username, "asdf");
         });
     });
 
     it("error", async () => {
       await supertest(app)
         .post("/users/login")
-        .send({ username: "asdf", password: "uiop" })
+        .send({ username: "asdf", password: "87654321" })
         .then(async (res) => {
-          strictEqual(res.statusCode, 400);
+          strictEqual(res.statusCode, 401);
         });
     });
   });
 
   describe("/users/new-token", () => {
-    let user: User | undefined;
-    beforeEach(async () => {
-      user = await User.register({ username: "asdf", password: "jkl;" });
-    });
-
     it("success", async () => {
-      const token = user!.generateToken();
+      const result = await User.register({
+        username: "asdf",
+        password: "12345678",
+      });
+      const token = (result.data as User).generateToken();
       await supertest(app)
         .post("/users/new-token")
         .set("authorization", `Bearer ${token}`)

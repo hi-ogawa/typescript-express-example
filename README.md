@@ -13,12 +13,13 @@ npm run server
 # Testing
 npm run db:create:test
 npm run test
+npm run test:watch -- -g "User generateToken" # Grep test case
 
 # Formatting
 npm run format
 
 # Console
 npm run console
-> await g.createConnection()
-> user = await g.User.register({ username: "xxx", password: "yyy" })
+> await g.init()
+> await g.User.count()
 ```

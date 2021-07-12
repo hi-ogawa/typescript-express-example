@@ -1,9 +1,21 @@
 import { Entity, BaseEntity, Column } from "typeorm";
 import bcrypt from "bcrypt";
-import { Jws, safeJsonParse } from "../utils";
-import { Timestamps } from "./utils";
+import {
+  Length,
+  Matches,
+  IsAscii,
+  ValidateIf,
+  IsNotEmpty,
+} from "class-validator";
+import { Jws, parseJson } from "../utils";
+import {
+  Timestamps,
+  IsUnique,
+  validateAndSave,
+  ValidationResult,
+} from "./utils";
 
-export interface AuthenticationParameters {
+interface CreateParams {
   username: string;
   password: string;
 }
@@ -13,28 +25,37 @@ const JWS_ALG = "HS256";
 const JWS_SECRET = "deadbeaf"; // TODO: Put into config
 const jws = new Jws(JWS_ALG, JWS_SECRET);
 
-//
-// TODO
-// - Validations
-//   - username uniqueness
-//   - username length
-//   - username format [a-zA-Z0-9\-\_\.]+
-//   - password length
-//
-
 @Entity("users")
 export class User extends BaseEntity {
   @Column({ primary: true, generated: true })
   id!: number;
 
   @Column({ nullable: false, unique: true })
+  @Matches(/^[a-zA-Z0-9\-\_\.]*$/)
+  @Length(1, 128)
+  @IsUnique({ message: "username '$value' is already taken" })
   username!: string;
 
+  // Not a column
+  @IsAscii()
+  @Length(8, 72)
+  @ValidateIf((it: any) => it.password !== undefined)
+  password: string | undefined;
+
   @Column({ nullable: false })
+  @IsNotEmpty({ message: "password should not be empty" }) // Use `passwordHash` to check if `password` is empty upon creation
   passwordHash!: string;
 
   @Column(() => Timestamps)
   timestamps: Timestamps = new Timestamps();
+
+  async setPassword(password?: string) {
+    if (password === undefined) {
+      return;
+    }
+    this.password = password;
+    this.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  }
 
   verifyPassword(password: string): Promise<boolean> {
     return bcrypt.compare(password, this.passwordHash);
@@ -50,35 +71,20 @@ export class User extends BaseEntity {
     );
   }
 
-  static async register(
-    params: Partial<AuthenticationParameters>
-  ): Promise<User | undefined> {
+  static async createWithPassword(
+    params: Partial<CreateParams>
+  ): Promise<User> {
     const { username, password } = params;
-    if (!username || !password) {
-      return;
-    }
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    try {
-      const user = this.create({ username, passwordHash });
-      await user.save();
-      return user;
-    } catch (e) {
-      return;
-    }
+    const user = this.create({ username });
+    await user.setPassword(password);
+    return user;
   }
 
-  static async login(
-    params: Partial<AuthenticationParameters>
-  ): Promise<User | undefined> {
-    const { username, password } = params;
-    if (!username || !password) {
-      return;
-    }
-    const user = await this.findOne({ username });
-    if (!user || !(await user.verifyPassword(password))) {
-      return;
-    }
-    return user;
+  static async register(
+    params: Partial<CreateParams>
+  ): Promise<ValidationResult<User>> {
+    const user = await this.createWithPassword(params);
+    return await validateAndSave(user);
   }
 
   static async findByToken(token: string): Promise<User | undefined> {
@@ -86,11 +92,11 @@ export class User extends BaseEntity {
     if (!stringPayload) {
       return;
     }
-    const payload = safeJsonParse(stringPayload);
-    if (!payload?.id) {
+    const result = parseJson(stringPayload);
+    if (!result.ok || !result.data.id) {
       return;
     }
-    const user = this.findOne({ id: payload.id });
+    const user = this.findOne({ id: result.data.id });
     if (!user) {
       return;
     }

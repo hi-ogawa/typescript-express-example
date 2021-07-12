@@ -3,7 +3,15 @@ import {
   BeforeInsert,
   BeforeUpdate,
   getMetadataArgsStorage,
+  BaseEntity,
 } from "typeorm";
+import {
+  validate,
+  registerDecorator,
+  ValidationOptions,
+  ValidationError,
+} from "class-validator";
+import { Result } from "../utils-result";
 
 export class Timestamps {
   @Column({ nullable: false })
@@ -56,4 +64,47 @@ export function AutoTimestamps(
     BeforeInsert()(prototype, createdAtListener);
     BeforeUpdate()(prototype, updatedAtListener);
   };
+}
+
+// cf. https://github.com/rails/rails/blob/main/activerecord/lib/active_record/validations/uniqueness.rb
+export function IsUnique(validationOptions?: ValidationOptions) {
+  return function (prototype: Object, propertyName: string) {
+    // Runtime check
+    const klass = prototype.constructor;
+    if (!(prototype instanceof BaseEntity)) {
+      throw new Error(
+        `[IsUnique] ${klass.name} class doesn't inherit from BaseEntity`
+      );
+    }
+    // Register
+    registerDecorator({
+      name: "isUnique",
+      target: klass,
+      propertyName: propertyName,
+      constraints: [],
+      options: validationOptions,
+      validator: {
+        async validate(value: any) {
+          const count = await (klass as any)
+            .createQueryBuilder()
+            .where({ [propertyName]: value })
+            .getCount();
+          return count == 0;
+        },
+      },
+    });
+  };
+}
+
+export type ValidationResult<T> = Result<T, ValidationError[]>;
+
+export async function validateAndSave<T extends BaseEntity>(
+  object: T
+): Promise<ValidationResult<T>> {
+  const errors = await validate(object as object);
+  if (errors.length > 0) {
+    return Result.Err(errors);
+  }
+  await object.save();
+  return Result.Ok(object);
 }

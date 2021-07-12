@@ -3,19 +3,25 @@ import { User } from "../models/user";
 
 export class UsersController extends ApplicationController {
   async register() {
-    const user = await User.register(this.req.body);
-    if (!user) {
-      return this.res.status(400).end();
-    }
-    this.res.json(user.toResponse());
+    const { username, password } = this.req.body;
+    const user = await User.createWithPassword({ username, password });
+    this.chain(
+      async () => this.validate(user),
+      async () => {
+        await user.save();
+        this.render(user.toResponse());
+      }
+    );
   }
 
   async login() {
-    const user = await User.login(this.req.body);
-    if (!user) {
-      return this.res.status(400).end();
+    const { username, password } = this.req.body;
+    const user = await User.findOne({ username });
+    if (user && password && (await user.verifyPassword(password))) {
+      this.render(user.toResponse());
+      return;
     }
-    this.res.json(user.toResponse());
+    this.renderError(401);
   }
 
   async newToken() {

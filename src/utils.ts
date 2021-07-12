@@ -1,15 +1,19 @@
 import jws from "jws";
+import { Result } from "./utils-result";
 
 export function sleep(msec: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, msec));
 }
 
-export function safeJsonParse(s: string): any {
+export function parseJson(s: string): Result<any, Error> {
   try {
-    return JSON.parse(s);
-  } catch (_) {}
+    return Result.Ok(JSON.parse(s));
+  } catch (e) {
+    return Result.Err(e);
+  }
 }
 
+// TODO: Use jswonwebtoken directly (https://github.com/auth0/node-jsonwebtoken)
 export class Jws {
   constructor(private algorithm: jws.Algorithm, private secret: string) {}
 
